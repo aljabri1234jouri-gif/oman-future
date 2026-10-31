@@ -1,0 +1,1272 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>مستقبل سلطنة عمان - خريطة قطاعية تفاعلية 3D</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Three.js (3D Graphics) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <!-- Chart.js (Interactive Charts) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- Cairo Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        cairo: ['Cairo', 'sans-serif'],
+                    },
+                    colors: {
+                        oman: {
+                            green: '#008751',
+                            red: '#D21034',
+                            gold: '#D4AF37',
+                            dark: '#0B1320',
+                            card: 'rgba(15, 23, 42, 0.75)'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            font-family: 'Cairo', sans-serif;
+            background: radial-gradient(circle at center, #111E38 0%, #070B14 100%);
+            color: #E2E8F0;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Styles */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.6);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s ease;
+        }
+
+        .glass-card:hover {
+            border-color: rgba(212, 175, 55, 0.5);
+            transform: translateY(-2px);
+            box-shadow: 0 0 15px rgba(212, 175, 55, 0.2);
+        }
+
+        .glass-button {
+            background: linear-gradient(135deg, rgba(0, 135, 81, 0.3), rgba(210, 16, 52, 0.3));
+            border: 1px solid rgba(212, 175, 55, 0.4);
+            backdrop-filter: blur(4px);
+            transition: all 0.3s ease;
+        }
+
+        .glass-button:hover, .glass-button.active {
+            background: linear-gradient(135deg, rgba(0, 135, 81, 0.7), rgba(212, 175, 55, 0.7));
+            border-color: #D4AF37;
+            box-shadow: 0 0 20px rgba(212, 175, 55, 0.4);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(11, 19, 32, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(212, 175, 55, 0.4);
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(212, 175, 55, 0.8);
+        }
+
+        .ambient-glow {
+            animation: pulseGlow 4s infinite ease-in-out;
+        }
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.8; }
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between relative select-none">
+
+    <!-- Ambient Light Effects in Background -->
+    <div class="fixed top-10 right-10 w-96 h-96 bg-oman-green/20 rounded-full blur-3xl pointer-events-none ambient-glow"></div>
+    <div class="fixed bottom-10 left-10 w-96 h-96 bg-oman-red/20 rounded-full blur-3xl pointer-events-none ambient-glow" style="animation-delay: 2s;"></div>
+    <div class="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-oman-gold/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Header Navigation -->
+    <header class="w-full z-20 p-4 lg:p-6 glass-panel border-b border-oman-gold/20 sticky top-0">
+        <div class="max-w-7xl mx-auto flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-oman-green via-oman-red to-oman-gold flex items-center justify-center shadow-lg p-0.5">
+                    <div class="w-full h-full bg-slate-900 rounded-[10px] flex items-center justify-center">
+                        <i data-lucide="compass" class="w-7 h-7 text-oman-gold animate-spin" style="animation-duration: 12s;"></i>
+                    </div>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black bg-clip-text text-transparent bg-gradient-to-r from-white via-oman-gold to-emerald-400">
+                        سلطنة عُمان الرقمية 2040
+                    </h1>
+                    <p class="text-xs text-slate-400 font-semibold">بوابة المؤشرات الوطنية والخريطة التفاعلية الشاملة</p>
+                </div>
+            </div>
+
+            <!-- Global Quick Stats Banner -->
+            <div class="hidden md:flex items-center gap-6 text-sm bg-slate-900/60 py-2 px-5 rounded-full border border-slate-700/50">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="trending-up" class="w-4 h-4 text-emerald-400"></i>
+                    <span class="text-slate-400">النمو الاقتصادي:</span>
+                    <span class="text-emerald-400 font-bold">%4.3</span>
+                </div>
+                <div class="w-px h-4 bg-slate-700"></div>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="target" class="w-4 h-4 text-oman-gold"></i>
+                    <span class="text-slate-400">رؤية 2040:</span>
+                    <span class="text-oman-gold font-bold">%68 مكتمل</span>
+                </div>
+                <div class="w-px h-4 bg-slate-700"></div>
+                <div class="flex items-center gap-2">
+                    <i data-lucide="users" class="w-4 h-4 text-rose-400"></i>
+                    <span class="text-slate-400">السكان:</span>
+                    <span class="text-white font-bold">5.1 مليون</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 max-w-7xl w-full mx-auto p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 relative z-10">
+
+        <!-- Left / Top Sector Selection Sidebar -->
+        <section class="lg:col-span-3 flex flex-col gap-3 order-2 lg:order-1">
+            <h2 class="text-lg font-bold text-oman-gold flex items-center gap-2 mb-1">
+                <i data-lucide="layers" class="w-5 h-5"></i>
+                القطاعات التنموية
+            </h2>
+
+            <div class="grid grid-cols-2 lg:grid-cols-1 gap-2.5" id="sector-buttons-container">
+                <!-- Buttons will be dynamically populated -->
+            </div>
+
+            <!-- Controls Panel for 3D Map -->
+            <div class="glass-panel p-4 rounded-2xl mt-4 space-y-3">
+                <h3 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                    <i data-lucide="sliders" class="w-4 h-4 text-oman-gold"></i>
+                    التحكم بالخريطة 3D
+                </h3>
+                
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400">التدوير التلقائي:</span>
+                    <button id="toggle-rotation-btn" class="px-3 py-1 text-xs rounded-lg glass-button text-emerald-300 font-semibold flex items-center gap-1">
+                        <i data-lucide="pause" class="w-3.5 h-3.5"></i>
+                        <span>إيقاف</span>
+                    </button>
+                </div>
+
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-slate-400">إعادة الضبط:</span>
+                    <button id="reset-view-btn" class="px-3 py-1 text-xs rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+                        إعادة التمركز
+                    </button>
+                </div>
+                
+                <div class="text-[11px] text-slate-400 leading-relaxed pt-2 border-t border-slate-700/50">
+                    <i data-lucide="mouse-pointer" class="w-3 h-3 inline ml-1 text-oman-gold"></i>
+                    انقر على أي محافظة في الخريطة الجغرافية لعرض مؤشراتها ومشاريعها الخاصة!
+                </div>
+            </div>
+        </section>
+
+        <!-- Center 3D Interactive Map Canvas -->
+        <section class="lg:col-span-5 h-[440px] lg:h-auto min-h-[440px] glass-panel rounded-3xl relative overflow-hidden flex flex-col justify-between order-1 lg:order-2 border-2 border-oman-gold/30">
+            <!-- Canvas Overlay Header -->
+            <div class="absolute top-4 right-4 left-4 z-10 flex justify-between items-center pointer-events-none">
+                <span id="current-governorate-tag" class="px-3 py-1.5 rounded-full text-xs font-bold bg-slate-900/80 border border-oman-gold/40 text-oman-gold backdrop-blur-md flex items-center gap-1.5 pointer-events-auto shadow-lg">
+                    <i data-lucide="map-pin" class="w-3.5 h-3.5 text-rose-500 animate-bounce"></i>
+                    <span id="governorate-name">انقر على محافظة في الخريطة</span>
+                </span>
+
+                <button id="show-all-oman-btn" onclick="resetToGlobalView()" class="pointer-events-auto bg-slate-900/80 hover:bg-slate-800 px-3 py-1.5 rounded-lg border border-oman-gold/40 text-xs font-semibold text-oman-gold backdrop-blur-md transition flex items-center gap-1.5">
+                    <i data-lucide="globe" class="w-3.5 h-3.5"></i>
+                    المؤشرات العامة
+                </button>
+            </div>
+
+            <!-- Three.js Canvas Container -->
+            <div id="canvas-container" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+            <!-- Bottom Floating Quick Info inside Map -->
+            <div class="absolute bottom-4 left-4 right-4 z-10 pointer-events-none">
+                <div class="bg-slate-950/80 border border-slate-800 p-3 rounded-xl backdrop-blur-md flex justify-around items-center text-center">
+                    <div>
+                        <p class="text-[10px] text-slate-400">المحافظة المحددة</p>
+                        <p class="text-sm font-bold text-white" id="selected-gov-footer">كل السلطنة</p>
+                    </div>
+                    <div class="w-px h-6 bg-slate-800"></div>
+                    <div>
+                        <p class="text-[10px] text-slate-400">النمو التنموي 2040</p>
+                        <p class="text-sm font-bold text-emerald-400" id="selected-gov-growth">%85</p>
+                    </div>
+                    <div class="w-px h-6 bg-slate-800"></div>
+                    <div>
+                        <p class="text-[10px] text-slate-400">القطاع الرئيسي</p>
+                        <p class="text-sm font-bold text-cyan-400" id="selected-gov-sector">متنوع</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Right Sector Details & Data Dashboard -->
+        <section class="lg:col-span-4 flex flex-col gap-4 order-3">
+            <div class="glass-panel p-5 rounded-3xl h-full flex flex-col justify-between relative overflow-hidden" id="sector-details-card">
+                <!-- Content will be dynamically inserted here -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full z-20 p-4 border-t border-slate-800 glass-panel mt-6">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center text-xs text-slate-400 gap-2">
+            <div>
+                © 2026 خريطة سلطنة عمان التفاعلية 3D | داعمة لأهداف <span class="text-oman-gold font-bold">رؤية عمان 2040</span>
+            </div>
+            <div class="flex gap-4">
+                <span class="hover:text-white cursor-pointer transition">البيانات المفتوحة</span>
+                <span>•</span>
+                <span class="hover:text-white cursor-pointer transition">المركز الوطني للإحصاء والمعلومات</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Main JS Logic -->
+    <script>
+        // Sector Data Definition
+        const sectorsData = [
+            {
+                id: 'health',
+                title: 'القطاع الصحي',
+                icon: 'activity',
+                color: '#10B981',
+                summary: 'منظومة صحية عالمية المستوى، تقدم خدمات رعاية متكاملة وفق أحدث تقنيات الطب والذكاء الاصطناعي.',
+                stats: [
+                    { label: 'المستشفيات الرئيسية', value: '52', unit: 'مستشفى' },
+                    { label: 'المراكز الصحية', value: '211', unit: 'مركز' },
+                    { label: 'الأطباء لكل 10k', value: '21', unit: 'طبيب' },
+                    { label: 'العمر المتوقع', value: '77.8', unit: 'عاماً' }
+                ],
+                chartData: {
+                    labels: ['2020', '2021', '2022', '2023', '2024', '2025'],
+                    datasets: [{
+                        label: 'ميزانية تطوير الرعاية الصحية (مليون ريال)',
+                        data: [650, 720, 810, 890, 960, 1100],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.15)',
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                projects: [
+                    'المدينة الطبية بمسقط (مشروع الرعاية المتقدمة)',
+                    'مستشفى السلطان قابوس الجديد بصلالة',
+                    'مشروع التحول الرقمي "الشفاء 3" للتنبؤ الطبي'
+                ]
+            },
+            {
+                id: 'education',
+                title: 'التعليم والابتكار',
+                icon: 'graduation-cap',
+                color: '#3B82F6',
+                summary: 'تعليم شامل ومستدام وبحث علمي يقود إلى مجتمع معرفي وقدرات وطنية منافسة عالمياً.',
+                stats: [
+                    { label: 'الجامعات والكليات', value: '34', unit: 'مؤسسة' },
+                    { label: 'المدارس المدرسية', value: '1,240', unit: 'مدرسة' },
+                    { label: 'نسبة الأمية', value: '< 2.1%', unit: 'فقط' },
+                    { label: 'الانفاق على البحث', value: '1.5%', unit: 'من الناتج' }
+                ],
+                chartData: {
+                    labels: ['التعليم المدرسي', 'التعليم العالي', 'التعليم المهني', 'البحث العلمي'],
+                    datasets: [{
+                        label: 'توزيع ميزانية التعليم (%)',
+                        data: [45, 30, 15, 10],
+                        backgroundColor: ['#3B82F6', '#60A5FA', '#93C5FD', '#BFDBFE']
+                    }]
+                },
+                projects: [
+                    'تطبيق مناهج الذكاء الاصطناعي والأمن السيبراني',
+                    'جامعة السلطان قابوس 2.0 للتخصصات المستقبليّة',
+                    'برنامج "ابتكار" لدعم رواد الأعمال الجامعيين'
+                ]
+            },
+            {
+                id: 'logistics',
+                title: 'المواصلات واللوجستيات',
+                icon: 'truck',
+                color: '#F59E0B',
+                summary: 'ربط سلطنة عمان بالأسواق العالمية عبر موانئ ومطارات محورية وشبكات طرق متطورة.',
+                stats: [
+                    { label: 'الموانئ التجارية', value: '3', unit: 'موانئ عالمية' },
+                    { label: 'المطارات الدولية', value: '5', unit: 'مطارات' },
+                    { label: 'شبكة الطرق المعبدة', value: '36,000+', unit: 'كم' },
+                    { label: 'الترتيب اللوجستي', value: '1st', unit: 'إقليمياً في الربط' }
+                ],
+                chartData: {
+                    labels: ['ميناء الدقم', 'ميناء صحار', 'ميناء صلالة'],
+                    datasets: [{
+                        label: 'حجم الحاويات السنوي (مليون حاوية)',
+                        data: [1.8, 3.2, 4.5],
+                        backgroundColor: ['#F59E0B', '#10B981', '#6366F1']
+                    }]
+                },
+                projects: [
+                    'مشروع السكك الحديدية اللوجستية (عُمان - الإمارات)',
+                    'توسعة المنطقة الاقتصادية الخاصة بالدقم',
+                    'تطوير ميناء السويق التجاري المتوسط'
+                ]
+            },
+            {
+                id: 'economy',
+                title: 'الاقتصاد والاستثمار',
+                icon: 'trending-up',
+                color: '#D4AF37',
+                summary: 'اقتصاد متنوع ومستدام قائم على التكنولوجيا والابتكار وجذب الاستثمارات الأجنبية المباشرة.',
+                stats: [
+                    { label: 'الناتج المحلي الإجمالي', value: '41.8', unit: 'مليار ريال' },
+                    { label: 'الاستثمار الأجنبي', value: '25.4', unit: 'مليار ريال' },
+                    { label: 'المناطق الاقتصادية', value: '5', unit: 'حرة وخاصة' },
+                    { label: 'التضخم', value: '1.2%', unit: 'مستقر' }
+                ],
+                chartData: {
+                    labels: ['النفط والغاز', 'الصناعة', 'السياحة', 'اللوجستيات', 'الخدمات'],
+                    datasets: [{
+                        label: 'تنويع مصادر الدخل 2040 (%)',
+                        data: [25, 25, 20, 15, 15],
+                        backgroundColor: ['#D21034', '#D4AF37', '#008751', '#3B82F6', '#8B5CF6']
+                    }]
+                },
+                projects: [
+                    'مشاريع الهيدروجين الأخضر (طاقة المستقبل)',
+                    'مجمعات الدقم لمصافي النفط والبتروكيماويات',
+                    'صندوق عمان الاستثماري لدعم المشاريع الناشئة'
+                ]
+            },
+            {
+                id: 'tourism',
+                title: 'السياحة والتراث',
+                icon: 'palmtree',
+                color: '#EC4899',
+                summary: 'تجربة سياحية فريدة تجمع بين أصالة التراث العماني والطبيعة الخلابة والتطور الفندقي العصري.',
+                stats: [
+                    { label: 'زوار خريف ظفار', value: '1.2', unit: 'مليون زائر' },
+                    { label: 'الفنادق والمنتجعات', value: '680+', unit: 'منشأة' },
+                    { label: 'المواقع الأثرية', value: '3,000+', unit: 'مسجلة' },
+                    { label: 'مواقع اليونسكو', value: '5', unit: 'مواقع عالمية' }
+                ],
+                chartData: {
+                    labels: ['2021', '2022', '2023', '2024', '2025'],
+                    datasets: [{
+                        label: 'عدد السياح الدوليين (بالمليون)',
+                        data: [1.5, 2.9, 4.0, 4.8, 5.5],
+                        borderColor: '#EC4899',
+                        backgroundColor: 'rgba(236, 72, 153, 0.2)',
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                projects: [
+                    'مشروع "حي الشرق" الترفيهي بركاء',
+                    'تطوير الواجهة البحرية بمطرح',
+                    'منتجعات الجبل الأخضر الفاخرة'
+                ]
+            },
+            {
+                id: 'tech',
+                title: 'التقنية والذكاء الاصطناعي',
+                icon: 'cpu',
+                color: '#8B5CF6',
+                summary: 'تسريع التحول الرقمي الشامل وتبني تقنيات الذكاء الاصطناعي وبناء مركز إقليمي للبيانات.',
+                stats: [
+                    { label: 'الخدمات الحكومية الرقمية', value: '88%', unit: 'متحولة' },
+                    { label: 'تغطية 5G', value: '94%', unit: 'للمناطق المأهولة' },
+                    { label: 'مراكز البيانات Cloud', value: '12', unit: 'مركز عملاق' },
+                    { label: 'الأمن السيبراني', value: '1st', unit: 'عربياً بالجاهزية' }
+                ],
+                chartData: {
+                    labels: ['الأمن السيبراني', 'السحابة', 'الذكاء الاصطناعي', 'تطوير التطبيقات'],
+                    datasets: [{
+                        label: 'الاستثمار التقني ($ مليون)',
+                        data: [300, 450, 600, 250],
+                        backgroundColor: ['#8B5CF6', '#A78BFA', '#C4B5FD', '#DDD6FE']
+                    }]
+                },
+                projects: [
+                    'البرنامج الوطني للذكاء الاصطناعي والتقنيات المتقدمة',
+                    'مركز المرجان لربط الكابلات البحرية بالدقم',
+                    'المختبر الوطني المفتوح للسيبرانيات'
+                ]
+            },
+            {
+                id: 'environment',
+                title: 'البيئة والطاقة النظيفة',
+                icon: 'leaf',
+                color: '#10B981',
+                summary: 'الالتزام بالحياد الصفري الكربوني بحلول عام 2050 وحماية التنوع البيئي الفَريد لسلطنة عُمان.',
+                stats: [
+                    { label: 'هدف الحياد الكربوني', value: '2050', unit: 'عام' },
+                    { label: 'المحميات الطبيعية', value: '27', unit: 'محمية معلنة' },
+                    { label: 'الطاقة المجددة 2030', value: '30%', unit: 'مستهدفة' },
+                    { label: 'استزراع الأشجار', value: '10M', unit: 'شجرة شقائق' }
+                ],
+                chartData: {
+                    labels: ['طاقة الشمس', 'طاقة الرياح', 'الهيدروجين', 'الغاز التقليدي'],
+                    datasets: [{
+                        label: 'مزيج المستهدف للطاقة 2030 (%)',
+                        data: [20, 10, 15, 55],
+                        backgroundColor: ['#FBBF24', '#34D399', '#60A5FA', '#9CA3AF']
+                    }]
+                },
+                projects: [
+                    'محطة "عبري 2" للطاقة الشمسية الكهرومواقية',
+                    'مشروع رياح ظفار للإنتاج الكهربائي',
+                    'المبادرة الوطنية لغرس 10 ملايين شجرة برية'
+                ]
+            }
+        ];
+
+        // Detailed Data for Each Governorate in Oman
+        const governoratesData = {
+            'مسقط': {
+                population: '1.45 مليون',
+                area: '3,900 كم²',
+                mainSector: 'الخدمات والمالية والابتكار',
+                growth: '%92',
+                stats: [
+                    { label: 'المؤسسات الحكومية', value: '85%', unit: 'متحولة رقمياً' },
+                    { label: 'المستشفيات المتقدمة', value: '18', unit: 'مستشفى مرجعي' },
+                    { label: 'المؤسسات التعليمية', value: '14', unit: 'جامعة وكلية' },
+                    { label: 'نسبة التوظيف التقني', value: '74%', unit: 'من الإجمالي' }
+                ],
+                projects: [
+                    'مشروع مدينة السلطان هيثم الذكية',
+                    'تطوير الواجهة البحرية لمطرح والتراث الساحلي',
+                    'مجمع الابتكار ومراكز الأبحاث المتقدمة'
+                ],
+                chartData: {
+                    labels: ['الخدمات والمال', 'السياحة والتجارة', 'التقنية والابتكار', 'اللوجستيات'],
+                    datasets: [{
+                        label: 'توزيع النشاط الاقتصادي بالمحافظة (%)',
+                        data: [40, 25, 20, 15],
+                        backgroundColor: ['#D21034', '#D4AF37', '#8B5CF6', '#3B82F6']
+                    }]
+                }
+            },
+            'ظفار': {
+                population: '470 ألف',
+                area: '99,300 كم²',
+                mainSector: 'السياحة والزراعة واللوجستيات',
+                growth: '%88',
+                stats: [
+                    { label: 'زوار خريف ظفار', value: '1.2M', unit: 'سائح سنوياً' },
+                    { label: 'ميناء صلالة', value: '4.5M', unit: 'حاوية نمطية' },
+                    { label: 'المزارع النادرة', value: '12,000', unit: 'فدان منتج' },
+                    { label: 'مشاريع الرياح', value: '50', unit: 'ميجاواط طاقة' }
+                ],
+                projects: [
+                    'مستشفى السلطان قابوس الجديد بصلالة',
+                    'توسعة ميناء صلالة والمنطقة الحرة',
+                    'تطوير المواقع السياحية بشزر ووادي دربات'
+                ],
+                chartData: {
+                    labels: ['السياحة البيئية', 'الشحن اللوجستي', 'الزراعة والأسماك', 'الصناعة'],
+                    datasets: [{
+                        label: 'المساهمة الاقتصادية لظفار (%)',
+                        data: [35, 30, 20, 15],
+                        backgroundColor: ['#008751', '#F59E0B', '#10B981', '#6366F1']
+                    }]
+                }
+            },
+            'مسندم': {
+                population: '50 ألف',
+                area: '1,800 كم²',
+                mainSector: 'السياحة البحرية والتجارة الإقليمية',
+                growth: '%84',
+                stats: [
+                    { label: 'السياحة البحرية', value: '350K', unit: 'زائر سنوياً' },
+                    { label: 'المحميات البحرية', value: '4', unit: 'محميات فريدة' },
+                    { label: 'المستشفيات التخصصية', value: '2', unit: 'مستشفى' },
+                    { label: 'الطاقة المجددة', value: '45%', unit: 'تغطية مستهدفة' }
+                ],
+                projects: [
+                    'تطوير ميناء خصب التجاري والسياحي',
+                    'طريق دبا - الخالدية - خصب الحيوي',
+                    'مشروع المحمية البحرية برأس مسندم'
+                ],
+                chartData: {
+                    labels: ['سياحة المضايق', 'الصيد المطور', 'التجارة البحرية', 'الخدمات'],
+                    datasets: [{
+                        label: 'أبرز قطاعات مسندم (%)',
+                        data: [45, 25, 20, 10],
+                        backgroundColor: ['#D4AF37', '#008751', '#3B82F6', '#EC4899']
+                    }]
+                }
+            },
+            'الداخلية': {
+                population: '380 ألف',
+                area: '31,900 كم²',
+                mainSector: 'التراث والثقافة والسياحة الجبلية',
+                growth: '%86',
+                stats: [
+                    { label: 'المواقع الأثرية', value: '450+', unit: 'موقع مسجل' },
+                    { label: 'زوار نزوى والجبل', value: '600K', unit: 'زائر سنوياً' },
+                    { label: 'الابتكار التقني', value: '1st', unit: 'مركز النمذجة (نزوى)' },
+                    { label: 'الأراضي الزراعية', value: '28%', unit: 'من المساحة' }
+                ],
+                projects: [
+                    'تطوير سياحة المغامرات بالجبل الأخضر وجبل شمس',
+                    'مشروع واحة الابتكار بجامعة التكنولوجيا والعلوم التطبيقية',
+                    'تأهيل وحماية حارة العقر والقلاع التاريخية'
+                ],
+                chartData: {
+                    labels: ['السياحة والتراث', 'التعليم والابتكار', 'الزراعة التقليدية', 'الصناعات الحرفية'],
+                    datasets: [{
+                        label: 'أهم قطاعات المحافظة (%)',
+                        data: [40, 25, 20, 15],
+                        backgroundColor: ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B']
+                    }]
+                }
+            },
+            'شمال الباطنة': {
+                population: '800 ألف',
+                area: '12,500 كم²',
+                mainSector: 'الصناعات الثقيلة والتجارة البحرية',
+                growth: '%90',
+                stats: [
+                    { label: 'ميناء صحار', value: '3.2M', unit: 'حاوية سنوياً' },
+                    { label: 'المنطقة الحرة بصحار', value: '26', unit: 'مصنع عملاق' },
+                    { label: 'المزارع الحديثة', value: '45%', unit: 'إنتاج زراعي وطني' },
+                    { label: 'مراكز التدريب', value: '12', unit: 'معهد مهني' }
+                ],
+                projects: [
+                    'توسعة ميناء صحار والمنطقة الاقتصادية',
+                    'مشروع الحديد الأخضر والصناعات التحويلية',
+                    'تطوير طريق الباطنة الساحلي والسياحي'
+                ],
+                chartData: {
+                    labels: ['الصناعة الثقيلة', 'اللوجستيات', 'الزراعة والأغذية', 'التجارة'],
+                    datasets: [{
+                        label: 'قطاعات شمال الباطنة (%)',
+                        data: [45, 25, 18, 12],
+                        backgroundColor: ['#8B5CF6', '#3B82F6', '#10B981', '#D4AF37']
+                    }]
+                }
+            },
+            'جنوب الباطنة': {
+                population: '470 ألف',
+                area: '5,300 كم²',
+                mainSector: 'التطوير العمراني والترفيه والزراعة',
+                growth: '%87',
+                stats: [
+                    { label: 'مشاريع الترفيه', value: '3', unit: 'مدن ترفيهية' },
+                    { label: 'المزارع المائية', value: '150+', unit: 'بيت محمّي' },
+                    { label: 'العيون الكبريتية', value: 'عين الكسفة', unit: 'مزار عالمي' },
+                    { label: 'المناطق الصناعية', value: 'مدينة سندان', unit: 'صناعية نموذجية' }
+                ],
+                projects: [
+                    'مشروع "حي الشرق" الترفيهي ببركاء',
+                    'تطوير عين الكسفة بالرستاق وسياحة العلاج',
+                    'المدينة اللوجستية الخزائن'
+                ],
+                chartData: {
+                    labels: ['الترفيه والعقار', 'اللوجستيات (خزائن)', 'الزراعة والسياحة', 'الصناعات الخفيفة'],
+                    datasets: [{
+                        label: 'الأنشطة الاستثمارية (%)',
+                        data: [35, 30, 20, 15],
+                        backgroundColor: ['#EC4899', '#F59E0B', '#008751', '#6366F1']
+                    }]
+                }
+            },
+            'الوسطى': {
+                population: '60 ألف',
+                area: '82,400 كم²',
+                mainSector: 'طاقة المستقبل والموانئ والبتروكيماويات',
+                growth: '%95',
+                stats: [
+                    { label: 'منطقة الدقم الحرة', value: '2,000', unit: 'كم² مساحة' },
+                    { label: 'مصفاة الدقم', value: '230K', unit: 'برميل/يوم' },
+                    { label: 'الهيدروجين الأخضر', value: '1st', unit: 'مركز عالمي' },
+                    { label: 'محمية المها', value: '2,824', unit: 'كم² حماية' }
+                ],
+                projects: [
+                    'مجمع الدقم للبتروكيماويات والمصفاة',
+                    'مشاريع الهيدروجين الأخضر العالمية بالدقم',
+                    'تطوير ميناء الصيد البحري متعدد الأغراض'
+                ],
+                chartData: {
+                    labels: ['الطاقة والبتروكيماويات', 'الخدمات اللوجستية', 'المحميات البيئية', 'الصيد البحري'],
+                    datasets: [{
+                        label: 'استثمارات الدقم والوسطى (%)',
+                        data: [50, 30, 10, 10],
+                        backgroundColor: ['#F59E0B', '#D21034', '#10B981', '#3B82F6']
+                    }]
+                }
+            },
+            'الظاهرة': {
+                population: '220 ألف',
+                area: '35,900 كم²',
+                mainSector: 'الطاقة النظيفة والتجارة الحدودية والزراعة',
+                growth: '%83',
+                stats: [
+                    { label: 'محطة عبري 2', value: '500', unit: 'ميجاواط شمسية' },
+                    { label: 'المنفذ الحدودي', value: 'منفذ الربع الخالي', unit: 'شريان تجاري' },
+                    { label: 'مواقع اليونسكو', value: 'مدافن بات', unit: 'تاريخ عالمي' },
+                    { label: 'الإنتاج الحيواني', value: '22%', unit: 'من الإجمالي' }
+                ],
+                projects: [
+                    'تطوير المنطقة الاقتصادية المتكاملة بالمحافظة',
+                    'توسعة مشاريع الطاقة الشمسية في عبري',
+                    'تطوير موقع بات الأثري ورفد السياحة'
+                ],
+                chartData: {
+                    labels: ['الطاقة النظيفة', 'التجارة الحدودية', 'الزراعة والحيوان', 'التراث والآثار'],
+                    datasets: [{
+                        label: 'أبرز مقومات الظاهرة (%)',
+                        data: [40, 30, 18, 12],
+                        backgroundColor: ['#10B981', '#F59E0B', '#D4AF37', '#8B5CF6']
+                    }]
+                }
+            },
+            'البريمي': {
+                population: '120 ألف',
+                area: '7,000 كم²',
+                mainSector: 'التجارة والابتكار والدعم اللوجستي',
+                growth: '%82',
+                stats: [
+                    { label: 'المؤسسات الصغيرة', value: '4,500+', unit: 'مؤسسة مسجلة' },
+                    { label: 'الواحة النواعية', value: '2', unit: 'واحات للابتكار' },
+                    { label: 'مستشفيات حديثة', value: '2', unit: 'مستشفى متطور' },
+                    { label: 'الجامعات والكليات', value: '3', unit: 'صروح أكاديمية' }
+                ],
+                projects: [
+                    'تطوير وتوسعة مدينة البريمي الصناعية',
+                    'مشروع البحيرة الاصطناعية وتطوير المنتزهات',
+                    'برامج دعم وتحفيز بيئة الأعمال الاستثمارية'
+                ],
+                chartData: {
+                    labels: ['التجارة وريادة الأعمال', 'التعليم العالي', 'الصناعة التجميعية', 'السياحة المحلية'],
+                    datasets: [{
+                        label: 'القطاعات الناشطة بالبريمي (%)',
+                        data: [40, 25, 20, 15],
+                        backgroundColor: ['#6366F1', '#3B82F6', '#F59E0B', '#EC4899']
+                    }]
+                }
+            },
+            'شمال الشرقية': {
+                population: '280 ألف',
+                area: '21,100 كم²',
+                mainSector: 'سياحة المغامرات والصحراء والتراث',
+                growth: '%85',
+                stats: [
+                    { label: 'المخيمات السياحية', value: '45+', unit: 'مخيم بدوي فاخر' },
+                    { label: 'العيون المائية', value: 'برك وادي بني خالد', unit: 'وجهة عالمية' },
+                    { label: 'الأسوق التقليدية', value: 'سوق إبراء', unit: 'تراث تاريخي' },
+                    { label: 'الابتكار الزراعي', value: '18%', unit: 'نمو التكنولوجيا' }
+                ],
+                projects: [
+                    'تطوير وتأهيل وادي بني خالد السياحي',
+                    'مشروع سياحة رمول الشرقية والتخييم المستدام',
+                    'توسعة جامعة الشرقية ومراكز أبحاث البيئة الصحراوية'
+                ],
+                chartData: {
+                    labels: ['سياحة الصحراء والأودية', 'الزراعة والنخيل', 'التجارة والحرف', 'الخدمات العامة'],
+                    datasets: [{
+                        label: 'مكونات اقتصاد شمال الشرقية (%)',
+                        data: [45, 25, 18, 12],
+                        backgroundColor: ['#14B8A6', '#10B981', '#D4AF37', '#6366F1']
+                    }]
+                }
+            },
+            'جنوب الشرقية': {
+                population: '320 ألف',
+                area: '12,000 كم²',
+                mainSector: 'الاقتصاد الأزرق وسياحة السواحل والغاز',
+                growth: '%89',
+                stats: [
+                    { label: 'إسالة الغاز الطبيعي', value: '10.4M', unit: 'طن سنوياً (صور)' },
+                    { label: 'محمية السلاحف', value: 'رأس الحد', unit: 'أهم محمية عالمية' },
+                    { label: 'صناعة السفن', value: '1st', unit: 'مركز السفن التقليدية' },
+                    { label: 'إنتاج الأسماك', value: '35%', unit: 'من الصيد الوطني' }
+                ],
+                projects: [
+                    'مشروع تطوير سور صور القديم والواجهة البحرية',
+                    'مشاريع استزراع الروبيان والأحياء البحرية برأس الخبة',
+                    'مطار رأس الحد السياحي المتخصص'
+                ],
+                chartData: {
+                    labels: ['الغاز والصناعة', 'الصيد والاستزراع السمكي', 'سياحة رأس الحد', 'التراث البحري'],
+                    datasets: [{
+                        label: 'ميزان جنوب الشرقية (%)',
+                        data: [40, 30, 20, 10],
+                        backgroundColor: ['#F97316', '#3B82F6', '#008751', '#D4AF37']
+                    }]
+                }
+            }
+        };
+
+        // Realistic Geographic Polygons for Oman Governorates (3D Map Projection)
+        const governorates = [
+            { 
+                name: 'مسقط', 
+                color: 0xD21034, 
+                points: [[1.5, 3.0], [2.1, 3.0], [2.6, 2.7], [2.8, 2.1], [2.5, 1.8], [1.9, 2.1], [1.7, 2.5], [1.5, 3.0]] 
+            },
+            { 
+                name: 'ظفار', 
+                color: 0x008751, 
+                points: [[-0.4, -2.4], [0.6, -2.6], [-0.2, -3.8], [-1.0, -4.6], [-2.3, -5.0], [-3.4, -4.8], [-3.6, -3.2], [-2.6, -2.4], [-0.4, -2.4]] 
+            },
+            { 
+                name: 'مسندم', 
+                color: 0xD4AF37, 
+                points: [[-0.2, 5.2], [0.1, 5.9], [0.3, 6.2], [0.55, 6.35], [0.65, 6.0], [0.45, 5.4], [0.1, 5.1], [-0.2, 5.2]] 
+            },
+            { 
+                name: 'الداخلية', 
+                color: 0x3B82F6, 
+                points: [[0.4, 2.4], [1.1, 2.2], [1.6, 1.9], [1.4, 1.0], [0.8, 0.4], [0.1, 0.6], [0.1, 1.3], [0.4, 2.4]] 
+            },
+            { 
+                name: 'شمال الباطنة', 
+                color: 0x8B5CF6, 
+                points: [[-0.6, 4.3], [0.1, 4.4], [0.7, 3.7], [0.8, 3.2], [0.2, 3.1], [-0.4, 3.8], [-0.6, 4.3]] 
+            },
+            { 
+                name: 'جنوب الباطنة', 
+                color: 0xEC4899, 
+                points: [[0.8, 3.2], [1.5, 3.0], [1.7, 2.5], [1.1, 2.2], [0.4, 2.4], [0.2, 3.1], [0.8, 3.2]] 
+            },
+            { 
+                name: 'الوسطى', 
+                color: 0xF59E0B, 
+                points: [[0.1, 0.6], [0.8, 0.4], [1.8, 0.6], [2.2, 0.2], [2.7, -0.4], [2.2, -1.3], [1.5, -2.1], [0.6, -2.6], [-0.4, -2.4], [-0.9, -1.3], [-0.7, 1.1], [0.1, 0.6]] 
+            },
+            { 
+                name: 'الظاهرة', 
+                color: 0x10B981, 
+                points: [[-1.3, 3.2], [-0.5, 3.2], [0.4, 2.4], [0.1, 1.3], [-0.7, 1.1], [-1.6, 1.4], [-1.9, 2.4], [-1.3, 3.2]] 
+            },
+            { 
+                name: 'البريمي', 
+                color: 0x6366F1, 
+                points: [[-1.2, 4.3], [-0.6, 4.3], [-0.4, 3.8], [-0.5, 3.2], [-1.3, 3.2], [-1.4, 3.8], [-1.2, 4.3]] 
+            },
+            { 
+                name: 'شمال الشرقية', 
+                color: 0x14B8A6, 
+                points: [[1.6, 1.9], [2.3, 1.8], [2.5, 1.1], [1.8, 0.6], [1.4, 1.0], [1.6, 1.9]] 
+            },
+            { 
+                name: 'جنوب الشرقية', 
+                color: 0xF97316, 
+                points: [[2.5, 1.8], [3.3, 1.8], [3.7, 1.2], [3.4, 0.3], [2.7, -0.4], [2.2, 0.2], [1.8, 0.6], [2.5, 1.1], [2.5, 1.8]] 
+            }
+        ];
+
+        let activeSector = sectorsData[0];
+        let selectedGovernorate = null;
+        let currentChart = null;
+
+        // Initialize App & UI
+        window.onload = function() {
+            lucide.createIcons();
+            renderSectorButtons();
+            renderSectorDetails(activeSector);
+            initThreeJS();
+        };
+
+        // Render Sector Selection Sidebar
+        function renderSectorButtons() {
+            const container = document.getElementById('sector-buttons-container');
+            container.innerHTML = sectorsData.map(sector => {
+                const isActive = sector.id === activeSector.id && !selectedGovernorate;
+                return `
+                    <button onclick="selectSector('${sector.id}')" 
+                            class="glass-button w-full text-right p-3 rounded-2xl flex items-center gap-3 transition-all ${isActive ? 'active border-oman-gold' : 'opacity-80 hover:opacity-100'}">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0" style="background: ${sector.color}25; color: ${sector.color}; border: 1px solid ${sector.color}50;">
+                            <i data-lucide="${sector.icon}" class="w-5 h-5"></i>
+                        </div>
+                        <div class="overflow-hidden">
+                            <h3 class="text-xs lg:text-sm font-bold text-white truncate">${sector.title}</h3>
+                            <p class="text-[10px] text-slate-400 truncate">مؤشرات السلطنة 2040</p>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+            lucide.createIcons();
+        }
+
+        // Handle Sector Change
+        function selectSector(sectorId) {
+            selectedGovernorate = null;
+            document.getElementById('governorate-name').innerText = "انقر على محافظة في الخريطة";
+            document.getElementById('selected-gov-footer').innerText = "كل السلطنة";
+            document.getElementById('selected-gov-growth').innerText = "%85";
+            document.getElementById('selected-gov-sector').innerText = "متنوع";
+
+            activeSector = sectorsData.find(s => s.id === sectorId) || sectorsData[0];
+            renderSectorButtons();
+            renderSectorDetails(activeSector);
+            highlightMapForSector(activeSector);
+        }
+
+        // Render Active Sector Details Panel
+        function renderSectorDetails(sector) {
+            const container = document.getElementById('sector-details-card');
+            
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-2xl flex items-center justify-center" style="background: ${sector.color}30; color: ${sector.color}; border: 1px solid ${sector.color};">
+                                <i data-lucide="${sector.icon}" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-black text-white">${sector.title}</h2>
+                                <span class="text-xs text-oman-gold font-semibold">المؤشرات العامة للسلطنة</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <p class="text-xs text-slate-300 leading-relaxed bg-slate-900/40 p-3 rounded-xl border border-slate-800">
+                        ${sector.summary}
+                    </p>
+
+                    <!-- Key Stats Grid -->
+                    <div class="grid grid-cols-2 gap-2.5">
+                        ${sector.stats.map(stat => `
+                            <div class="glass-card p-2.5 rounded-xl text-center">
+                                <p class="text-[10px] text-slate-400 mb-0.5">${stat.label}</p>
+                                <p class="text-base font-extrabold text-white" style="color: ${sector.color};">${stat.value}</p>
+                                <p class="text-[9px] text-slate-500">${stat.unit}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Interactive Chart Container -->
+                    <div class="bg-slate-900/70 p-3 rounded-2xl border border-slate-800">
+                        <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-1.5">
+                            <i data-lucide="bar-chart-2" class="w-3.5 h-3.5 text-oman-gold"></i>
+                            تحليل الإحصائيات والتطلعات
+                        </h4>
+                        <div class="h-44 w-full relative">
+                            <canvas id="sectorChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Major Projects -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-oman-gold flex items-center gap-1.5">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                            أبرز مشاريع رؤية عمان 2040
+                        </h4>
+                        <div class="space-y-1.5">
+                            ${sector.projects.map(project => `
+                                <div class="text-xs text-slate-300 flex items-center gap-2 bg-slate-900/30 p-2 rounded-lg border border-slate-800/80">
+                                    <span class="w-1.5 h-1.5 rounded-full shrink-0" style="background-color: ${sector.color}"></span>
+                                    <span class="truncate">${project}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            lucide.createIcons();
+            initChart(sector);
+        }
+
+        // Render Specific Governorate Details
+        function renderGovernorateDetails(govName) {
+            const gov = governoratesData[govName];
+            if (!gov) return;
+
+            selectedGovernorate = govName;
+            document.getElementById('governorate-name').innerText = `محافظة ${govName}`;
+            document.getElementById('selected-gov-footer').innerText = `محافظة ${govName}`;
+            document.getElementById('selected-gov-growth').innerText = gov.growth;
+            document.getElementById('selected-gov-sector').innerText = gov.mainSector.split(' ')[0];
+
+            renderSectorButtons(); // Unhighlight sectors sidebar
+
+            const container = document.getElementById('sector-details-card');
+            
+            container.innerHTML = `
+                <div class="space-y-4">
+                    <!-- Header -->
+                    <div class="flex items-center justify-between border-b border-slate-700/60 pb-3">
+                        <div class="flex items-center gap-3">
+                            <div class="w-11 h-11 rounded-2xl flex items-center justify-center bg-oman-gold/20 text-oman-gold border border-oman-gold">
+                                <i data-lucide="map-pin" class="w-6 h-6"></i>
+                            </div>
+                            <div>
+                                <h2 class="text-xl font-black text-white">محافظة ${govName}</h2>
+                                <span class="text-xs text-emerald-400 font-semibold">المساحة: ${gov.area} | السكان: ${gov.population}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Summary -->
+                    <div class="text-xs text-slate-300 leading-relaxed bg-slate-900/60 p-3 rounded-xl border border-oman-gold/30">
+                        <span class="text-oman-gold font-bold">القطاع المحوري:</span> ${gov.mainSector}
+                    </div>
+
+                    <!-- Key Stats Grid -->
+                    <div class="grid grid-cols-2 gap-2.5">
+                        ${gov.stats.map(stat => `
+                            <div class="glass-card p-2.5 rounded-xl text-center">
+                                <p class="text-[10px] text-slate-400 mb-0.5">${stat.label}</p>
+                                <p class="text-base font-extrabold text-oman-gold">${stat.value}</p>
+                                <p class="text-[9px] text-slate-500">${stat.unit}</p>
+                            </div>
+                        `).join('')}
+                    </div>
+
+                    <!-- Interactive Chart Container -->
+                    <div class="bg-slate-900/70 p-3 rounded-2xl border border-slate-800">
+                        <h4 class="text-xs font-bold text-slate-300 mb-2 flex items-center gap-1.5">
+                            <i data-lucide="pie-chart" class="w-3.5 h-3.5 text-oman-gold"></i>
+                            التوزيع الاقتصادي لمحافظة ${govName}
+                        </h4>
+                        <div class="h-44 w-full relative">
+                            <canvas id="sectorChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Major Projects -->
+                    <div class="space-y-2">
+                        <h4 class="text-xs font-bold text-oman-gold flex items-center gap-1.5">
+                            <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+                            مشاريع رؤية 2040 في ${govName}
+                        </h4>
+                        <div class="space-y-1.5">
+                            ${gov.projects.map(project => `
+                                <div class="text-xs text-slate-300 flex items-center gap-2 bg-slate-900/40 p-2 rounded-lg border border-slate-800">
+                                    <span class="w-1.5 h-1.5 rounded-full shrink-0 bg-oman-gold"></span>
+                                    <span class="truncate">${project}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            lucide.createIcons();
+            initGovChart(gov.chartData);
+        }
+
+        // Initialize Governorates Chart
+        function initGovChart(chartData) {
+            const ctx = document.getElementById('sectorChart').getContext('2d');
+            
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            currentChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'bottom',
+                            labels: {
+                                color: '#94A3B8',
+                                font: { family: 'Cairo', size: 9 },
+                                boxWidth: 8
+                            }
+                        },
+                        tooltip: {
+                            titleFont: { family: 'Cairo' },
+                            bodyFont: { family: 'Cairo' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Reset view back to global Oman sectors
+        function resetToGlobalView() {
+            selectedGovernorate = null;
+            document.getElementById('governorate-name').innerText = "انقر على محافظة في الخريطة";
+            document.getElementById('selected-gov-footer').innerText = "كل السلطنة";
+            document.getElementById('selected-gov-growth').innerText = "%85";
+            document.getElementById('selected-gov-sector').innerText = "متنوع";
+            renderSectorButtons();
+            renderSectorDetails(activeSector);
+        }
+
+        // Initialize Chart.js for Sectors
+        function initChart(sector) {
+            const ctx = document.getElementById('sectorChart').getContext('2d');
+            
+            if (currentChart) {
+                currentChart.destroy();
+            }
+
+            const chartType = sector.id === 'education' || sector.id === 'economy' || sector.id === 'environment' ? 'doughnut' : 'line';
+
+            currentChart = new Chart(ctx, {
+                type: chartType,
+                data: sector.chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: chartType === 'doughnut',
+                            position: 'bottom',
+                            labels: {
+                                color: '#94A3B8',
+                                font: { family: 'Cairo', size: 10 },
+                                boxWidth: 10
+                            }
+                        },
+                        tooltip: {
+                            titleFont: { family: 'Cairo' },
+                            bodyFont: { family: 'Cairo' }
+                        }
+                    },
+                    scales: chartType === 'doughnut' ? {} : {
+                        x: {
+                            ticks: { color: '#94A3B8', font: { family: 'Cairo', size: 9 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        },
+                        y: {
+                            ticks: { color: '#94A3B8', font: { family: 'Cairo', size: 9 } },
+                            grid: { color: 'rgba(255, 255, 255, 0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        // --- Three.js 3D Oman Map Visualization (Geographic Polygon Extrusions) ---
+        let scene, camera, renderer, controls;
+        let mapGroup;
+        let governorateMeshes = [];
+        let isAutoRotating = true;
+
+        function initThreeJS() {
+            const container = document.getElementById('canvas-container');
+            const width = container.clientWidth;
+            const height = container.clientHeight;
+
+            // Scene setup
+            scene = new THREE.Scene();
+            scene.fog = new THREE.FogExp2(0x070B14, 0.06);
+
+            // Camera setup
+            camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 1000);
+            camera.position.set(0, -6.5, 7.5);
+
+            // Renderer setup
+            renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+            renderer.setSize(width, height);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            renderer.shadowMap.enabled = true;
+            container.appendChild(renderer.domElement);
+
+            // Orbit Controls
+            controls = new THREE.OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            controls.maxPolarAngle = Math.PI / 2.1;
+
+            // Lighting setup
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
+            scene.add(ambientLight);
+
+            const sunLight = new THREE.DirectionalLight(0xD4AF37, 1.2);
+            sunLight.position.set(5, 10, 8);
+            scene.add(sunLight);
+
+            const greenGlow = new THREE.PointLight(0x008751, 2.2, 12);
+            greenGlow.position.set(-3, 2, 4);
+            scene.add(greenGlow);
+
+            const redGlow = new THREE.PointLight(0xD21034, 2.2, 12);
+            redGlow.position.set(3, -2, 4);
+            scene.add(redGlow);
+
+            // Map Group Container
+            mapGroup = new THREE.Group();
+
+            // Base Grid Pedestal
+            const gridHelper = new THREE.PolarGridHelper(5.5, 16, 8, 64, 0xD4AF37, 0x1E293B);
+            gridHelper.rotation.x = Math.PI / 2;
+            gridHelper.position.z = -0.05;
+            mapGroup.add(gridHelper);
+
+            // Generate 3D Oman Map Governorates as Extruded Geographic Shapes
+            governorateMeshes = [];
+            governorates.forEach((gov, idx) => {
+                const shape = new THREE.Shape();
+                gov.points.forEach((pt, pIdx) => {
+                    const px = pt[0] * 0.75;
+                    const py = pt[1] * 0.75;
+                    if (pIdx === 0) shape.moveTo(px, py);
+                    else shape.lineTo(px, py);
+                });
+                shape.closePath();
+
+                const extrudeSettings = {
+                    depth: 0.32,
+                    bevelEnabled: true,
+                    bevelSegments: 2,
+                    steps: 1,
+                    bevelSize: 0.03,
+                    bevelThickness: 0.03
+                };
+
+                const geometry = new THREE.ExtrudeGeometry(shape, extrudeSettings);
+
+                const material = new THREE.MeshStandardMaterial({
+                    color: gov.color,
+                    roughness: 0.25,
+                    metalness: 0.45,
+                    emissive: gov.color,
+                    emissiveIntensity: 0.2
+                });
+
+                const mesh = new THREE.Mesh(geometry, material);
+                mesh.userData = { name: gov.name, originalColor: gov.color, index: idx, baseZ: 0 };
+
+                // Add wireframe / edge glow highlight around borders
+                const wireframeGeo = new THREE.EdgesGeometry(geometry);
+                const wireframeMat = new THREE.LineBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.35 });
+                const wireframe = new THREE.LineSegments(wireframeGeo, wireframeMat);
+                mesh.add(wireframe);
+
+                mapGroup.add(mesh);
+                governorateMeshes.push(mesh);
+            });
+
+            // Adjust overall map inclination to face the viewer
+            mapGroup.rotation.x = -Math.PI / 5.5;
+            scene.add(mapGroup);
+
+            // Raycasting for Interactivity
+            const raycaster = new THREE.Raycaster();
+            const mouse = new THREE.Vector2();
+
+            renderer.domElement.addEventListener('pointerdown', (event) => {
+                const rect = renderer.domElement.getBoundingClientRect();
+                mouse.x = ((event.clientX - rect.left) / container.clientWidth) * 2 - 1;
+                mouse.y = -((event.clientY - rect.top) / container.clientHeight) * 2 + 1;
+
+                raycaster.setFromCamera(mouse, camera);
+                const intersects = raycaster.intersectObjects(governorateMeshes);
+
+                if (intersects.length > 0) {
+                    const clickedGov = intersects[0].object;
+                    const govName = clickedGov.userData.name;
+                    
+                    // Render details for clicked Governorate
+                    renderGovernorateDetails(govName);
+                    
+                    // Visual Elevation Bounce & Highlight Effect
+                    clickedGov.position.z += 0.45;
+                    clickedGov.material.emissiveIntensity = 0.7;
+                    
+                    setTimeout(() => { 
+                        clickedGov.position.z -= 0.45;
+                        clickedGov.material.emissiveIntensity = 0.2;
+                    }, 400);
+                }
+            });
+
+            // Handle Resize
+            window.addEventListener('resize', () => {
+                const w = container.clientWidth;
+                const h = container.clientHeight;
+                camera.aspect = w / h;
+                camera.updateProjectionMatrix();
+                renderer.setSize(w, h);
+            });
+
+            // Control Buttons
+            const rotateBtn = document.getElementById('toggle-rotation-btn');
+            rotateBtn.addEventListener('click', () => {
+                isAutoRotating = !isAutoRotating;
+                rotateBtn.querySelector('span').innerText = isAutoRotating ? 'إيقاف' : 'تشغيل';
+                rotateBtn.querySelector('i').setAttribute('data-lucide', isAutoRotating ? 'pause' : 'play');
+                lucide.createIcons();
+            });
+
+            document.getElementById('reset-view-btn').addEventListener('click', () => {
+                camera.position.set(0, -6.5, 7.5);
+                mapGroup.rotation.set(-Math.PI / 5.5, 0, 0);
+                controls.reset();
+            });
+
+            // Animation Loop
+            function animate() {
+                requestAnimationFrame(animate);
+
+                if (isAutoRotating && mapGroup) {
+                    mapGroup.rotation.z += 0.004;
+                }
+
+                // Gentle floating wave effect for the map territories
+                const time = Date.now() * 0.0015;
+                governorateMeshes.forEach((mesh, index) => {
+                    mesh.position.z = Math.sin(time + index) * 0.035;
+                });
+
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+            animate();
+        }
+
+        // Sector switch visual highlight in 3D Map
+        function highlightMapForSector(sector) {
+            if (!governorateMeshes.length) return;
+
+            const hexColor = parseInt(sector.color.replace('#', '0x'));
+            
+            governorateMeshes.forEach((mesh) => {
+                mesh.material.emissive.setHex(hexColor);
+                mesh.material.emissiveIntensity = 0.55;
+
+                setTimeout(() => {
+                    mesh.material.emissive.setHex(mesh.userData.originalColor);
+                    mesh.material.emissiveIntensity = 0.2;
+                }, 800);
+            });
+        }
+    </script>
+</body>
+</html>
